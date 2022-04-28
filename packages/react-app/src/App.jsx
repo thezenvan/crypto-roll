@@ -1,9 +1,9 @@
 import WalletConnectProvider from "@walletconnect/web3-provider";
 //import Torus from "@toruslabs/torus-embed"
 import WalletLink from "walletlink";
-import { Alert, Button, Col, Menu, Row, List } from "antd";
+import { Alert, Button, Col, Divider, Menu, Row, List, Modal, Typography } from "antd";
 import "antd/dist/antd.css";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { BrowserRouter, Link, Route, Switch } from "react-router-dom";
 import Web3Modal from "web3modal";
 import "./App.css";
@@ -28,6 +28,8 @@ import Portis from "@portis/web3";
 import Fortmatic from "fortmatic";
 import Authereum from "authereum";
 import humanizeDuration from "humanize-duration";
+
+const { Text } = Typography;
 
 const { ethers } = require("ethers");
 /*
@@ -173,6 +175,8 @@ function App(props) {
 
   const [injectedProvider, setInjectedProvider] = useState();
   const [address, setAddress] = useState();
+  const [loading, setLoading] = useState(false);
+  const [previousRoll, setPreviousRoll] = useState(0);
 
   const logoutOfWeb3Modal = async () => {
     await web3Modal.clearCachedProvider();
@@ -264,13 +268,47 @@ function App(props) {
   const stakeEvents = useEventListener(readContracts, "Staker", "Stake", localProvider, 1);
   console.log("📟 stake events:", stakeEvents);
 
-  // ** keep track of a variable from the contract in the local React state:
-  const timeLeft = useContractReader(readContracts, "Staker", "timeLeft");
-  console.log("⏳ timeLeft:", timeLeft);
+  const rollEvents = useEventListener(readContracts, "Staker", "Rolled", localProvider, 1);
+  //console.log("📟 roll events:", rollEvents);
 
-  // ** Listen for when the contract has been 'completed'
-  const complete = useContractReader(readContracts, "ExampleExternalContract", "completed");
-  console.log("✅ complete:", complete);
+  // ** keep track of a variable from the contract in the local React state:
+  const randomChars = useContractReader(readContracts, "Staker", "randomChars");
+  console.log("randomChars:", randomChars);
+
+  //const playerRoll = useContractReader(readContracts, "Staker", "playerRoll");
+  //console.log("playerRoll:", playerRoll);
+
+  // ** keep track of a variable from the contract in the local React state:
+  const playerRoll = useContractReader(readContracts, "Staker", "rolls", [address]);
+  //console.log("💸 playerRoll:", playerRoll);
+
+  // when playerRolled changes, setLoading to false
+  const playerRolled = useMemo(() => {
+    //console.log("BLAT "+rollEvents[rollEvents.length-1].args[1])
+    if (playerRoll!=0 && playerRoll!=null && rollEvents[rollEvents.length-1].args[1]!=previousRoll) {
+      //setLoading(false);
+      //console.log("playerRolled "+playerRoll);
+      setPreviousRoll(playerRoll);
+    }
+  },[rollEvents])
+
+  // ** Listen for when the player won
+  const playerWonAddress = useContractReader(readContracts, "Staker", "playerWonAddress");
+  console.log("✅ playerWonAddress:", playerWonAddress);
+
+  // for how does this work? Modal
+  const infoModal = () => {
+    Modal.info({
+      title: 'How Does This Work?',
+      content: (
+        <div>
+          <p>Press the button above to deposit crypto into the pot and roll for a chance to win, it's that simple!</p>
+          <p>After a winning roll happens a new set of numbers is chosen and the pot is reset.</p>
+        </div>
+      ),
+      onOk() {},
+    });
+  }
 
   const exampleExternalContractBalance = useBalance(
     localProvider,
@@ -278,15 +316,37 @@ function App(props) {
   );
   if (DEBUG) console.log("💵 exampleExternalContractBalance", exampleExternalContractBalance);
 
-  let completeDisplay = "";
-  if (complete) {
-    completeDisplay = (
-      <div style={{ padding: 64, backgroundColor: "#eeffef", fontWeight: "bolder", color: "rgba(0, 0, 0, 0.85)" }}>
-        🚀 🎖 👩‍🚀 -- Staking App triggered `ExampleExternalContract` -- 🎉 🍾 🎊
-        <Balance balance={exampleExternalContractBalance} fontSize={64} /> ETH staked!
+  let playerWonDisplay = "";
+  if (playerWonAddress == address) {
+    playerWonDisplay = (
+      <div style={{ padding: 64, backgroundColor: "#00ff00", fontWeight: "bolder", color: "rgba(0, 0, 0, 0.85)" }}>
+        <Text type="secondary">🚀 🎖 👩‍🚀 -- YOU WON </Text>
+        <Text>{stakerContractBalance && stakerContractBalance * 1}.</Text>
+        <Text> CONGRATS! -- 🎉 🍾 🎊</Text>
       </div>
     );
   }
+
+  let rollButton;
+  if (DEBUG || (!DEBUG && injectedProvider && injectedProvider.provider)) {
+  rollButton = (
+    <div style={{ padding: 8 }}>
+      <Button
+        type="primary"
+        shape="round"
+        loading={loading}
+        size="40"
+        onClick={() => {
+          setLoading(true);
+          tx(writeContracts.Staker.stake({ value: ethers.utils.parseEther("0.0001") }), writeResult => {
+            setLoading(false);
+          });
+        }}
+      >
+        Roll For A Chance To Win!
+      </Button>
+    </div>
+  )};
 
   /*
   const addressFromENS = useResolveName(mainnetProvider, "austingriffith.eth");
@@ -484,7 +544,7 @@ function App(props) {
       <Header />
       {networkDisplay}
       <BrowserRouter>
-        <Menu style={{ textAlign: "center" }} selectedKeys={[route]} mode="horizontal">
+        {/*<Menu style={{ textAlign: "center" }} selectedKeys={[route]} mode="horizontal">
           <Menu.Item key="/">
             <Link
               onClick={() => {
@@ -505,64 +565,43 @@ function App(props) {
               Debug Contracts
             </Link>
           </Menu.Item>
-        </Menu>
+        </Menu>*/}
 
         <Switch>
           <Route exact path="/">
-            {completeDisplay}
+            {playerWonDisplay}
 
+            <div style={{ padding: 8 }}>
+              <div>Total Pot:</div>
+              <Balance balance={stakerContractBalance} fontSize={64} />ETH
+            </div>
+
+            <div style={{ padding: 8 }}>
+              <div>Chosen Numbers:</div>
+              <h1>{randomChars && randomChars*1}</h1>
+            </div>
+
+            <div style={{ padding: 8 }}>
+              <div>Your Roll:</div>
+              {!loading ? (
+                <h1>{playerRoll && playerRoll*1}</h1>
+              ) : (
+                <h1>Rolling...</h1>
+              )}
+            </div>
+
+            {rollButton}
+            
             <div style={{ padding: 8, marginTop: 32 }}>
-              <div>Staker Contract:</div>
+              <Button type="text" onClick={infoModal}>How Does This Work?</Button>
+            </div>
+
+            <Divider />
+
+            <div style={{ padding: 8, marginTop: 64 }}>
+              <div>Roll Contract:</div>
               <Address value={readContracts && readContracts.Staker && readContracts.Staker.address} />
-            </div>
-
-            <div style={{ padding: 8, marginTop: 32 }}>
-              <div>Timeleft:</div>
-              {timeLeft && humanizeDuration(timeLeft.toNumber() * 1000)}
-            </div>
-
-            <div style={{ padding: 8 }}>
-              <div>Total staked:</div>
-              <Balance balance={stakerContractBalance} fontSize={64} />/<Balance balance={threshold} fontSize={64} />
-            </div>
-
-            <div style={{ padding: 8 }}>
-              <div>You staked:</div>
-              <Balance balance={balanceStaked} fontSize={64} />
-            </div>
-
-            <div style={{ padding: 8 }}>
-              <Button
-                type={"default"}
-                onClick={() => {
-                  tx(writeContracts.Staker.execute());
-                }}
-              >
-                📡 Execute!
-              </Button>
-            </div>
-
-            <div style={{ padding: 8 }}>
-              <Button
-                type={"default"}
-                onClick={() => {
-                  tx(writeContracts.Staker.withdraw());
-                }}
-              >
-                🏧 Withdraw
-              </Button>
-            </div>
-
-            <div style={{ padding: 8 }}>
-              <Button
-                type={balanceStaked ? "success" : "primary"}
-                onClick={() => {
-                  tx(writeContracts.Staker.stake({ value: ethers.utils.parseEther("0.5") }));
-                }}
-              >
-                🥩 Stake 0.5 ether!
-              </Button>
-            </div>
+            </div>            
 
             {/*
                 🎛 this scaffolding is full of commonly used components
@@ -596,24 +635,6 @@ function App(props) {
             />
             */}
           </Route>
-          <Route path="/contracts">
-            <Contract
-              name="Staker"
-              signer={userSigner}
-              provider={localProvider}
-              address={address}
-              blockExplorer={blockExplorer}
-              contractConfig={contractConfig}
-            />
-            <Contract
-              name="ExampleExternalContract"
-              signer={userSigner}
-              provider={localProvider}
-              address={address}
-              blockExplorer={blockExplorer}
-              contractConfig={contractConfig}
-            />
-          </Route>
         </Switch>
       </BrowserRouter>
 
@@ -632,18 +653,11 @@ function App(props) {
           logoutOfWeb3Modal={logoutOfWeb3Modal}
           blockExplorer={blockExplorer}
         />
-        {faucetHint}
       </div>
 
       <div style={{ marginTop: 32, opacity: 0.5 }}>
         {/* Add your address here */}
-        Created by <Address value={"Your...address"} ensProvider={mainnetProvider} fontSize={16} />
-      </div>
-
-      <div style={{ marginTop: 32, opacity: 0.5 }}>
-        <a target="_blank" style={{ padding: 32, color: "#000" }} href="https://github.com/scaffold-eth/scaffold-eth">
-          🍴 Fork me!
-        </a>
+        Created by <Address value={"A Degen"} ensProvider={mainnetProvider} fontSize={16} />
       </div>
 
       {/* 🗺 Extra UI like gas price, eth price, faucet, and support: */}

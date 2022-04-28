@@ -1,31 +1,27 @@
-// deploy/00_deploy_example_external_contract.js
+// deploy/01_deploy_staker.js
 
-const { ethers } = require("hardhat");
+// const { ethers } = require("hardhat");
 
 module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
-  const chianId = await getChainId();
+  const chainId = await getChainId();
 
-  await deploy("ExampleExternalContract", {
+  await deploy("Staker", {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
-    // args: [ "Hello", ethers.utils.parseEther("1.5") ],
     log: true,
   });
 
-  const exampleExternalContract = await ethers.getContract("ExampleExternalContract");
-
   // Getting a previously deployed contract
-  // const ExampleExternalContract = await ethers.getContract(
-  //   "ExampleExternalContract",
+  // const Staker = await ethers.getContract(
+  //   "Staker",
   //   deployer
   // );
 
   // await YourContract.setPurpose("Hello");
 
-  // if you want to instantiate a version of a contract at a specific address!
-  // const yourContract = await ethers.getContractAt('YourContract', "0xaAC799eC2d00C013f1F11c37E654e59B0429DF6A")
+  // const yourContract = await ethers.getContractAt('YourContract', "0xaAC799eC2d00C013f1F11c37E654e59B0429DF6A") //<-- if you want to instantiate a version of a contract at a specific address!
 
   // If you want to send value to an address from the deployer
   // const deployerWallet = ethers.provider.getSigner()
@@ -45,26 +41,20 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   //  LibraryName: **LibraryAddress**
   // });
 
-  // todo: verification with etherscan
-  // Verification
+  // todo: uncomment to verify your contract
   // if (chainId !== "31337") {
   //   try {
   //     console.log(" 🎫 Verifing Contract on Etherscan... ");
-  //     await sleep(5000); // wait 5 seconds for deployment to propagate
-  //     await run("verify:verify", {
-  //       address: ExampleExternalContract.address,
-  //       contract:
-  //         "contracts/ExampleExternalContract.sol:ExampleExternalContract",
-  //       contractArguments: [],
-  //     });
-  //   } catch (error) {
-  //     console.log("⚠️ Contract Verification Failed: ", error);
+  //     await sleep(3000); // wait 3 seconds for deployment to propagate bytecode
+  //      await run("verify:verify", {
+  //        address: Staker.address,
+  //        contract: "contracts/Staker.sol:Staker",
+  //        contractArguments: [],
+  //      });
+  //   } catch (e) {
+  //     console.log(" ⚠️ Failed to verify contract on Etherscan ");
   //   }
   // }
 };
 
-// function sleep(ms) {
-//   return new Promise((resolve) => setTimeout(resolve, ms));
-// }
-
-module.exports.tags = ["ExampleExternalContract"];
+module.exports.tags = ["Staker"];

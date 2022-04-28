@@ -1,0 +1,42 @@
+2do
+====
+- setLoading update if transaction fails (rinkeby)
+- show animation until transaction completes and roll number received
+- upload to rinkeby for testing
+- send to reddit and discord for feedback
+
+- balance on top right not always updating when connecting metamask
+- address showing on top right w/o wallet connected
+. Change colors, logo, prize rainbow, spin number animation
+- github commit
+- design UI
+- set colors
+- remove unused code in app and contract
+- show contract balance in proper token
+- change staking amount to $1 equivalent
+- animation of rolling after staking
+- send pot minus 1% to winner
+- send 1% of staking when someone wins pot
+- random charchter generator in constructor and after winning
+- change logo and footer
+- add timestamp to staking events
+- support multiple networks (arbitrum, optimism, polygon, harmony, avalanche, binance, etc...)
+- set keys before publishing
+- debug to false
+- verify contracts
+- get random string from oracle (https://stackoverflow.com/questions/48848948/how-to-generate-a-random-number-in-solidity/67332959#67332959)
+- vars https://docs.soliditylang.org/en/v0.8.13/cheatsheet.html?highlight=global%20variables#global-variables
+
+
+done
+=====
+- receive contract function
+- modal window "how it works" button
+- playerWon to msg.sender and show only to winner
+- Clear playerWon on stake()
+- remove ExampleExternalContract from deploy
+- Generate new random on win
+- correct "your roll" to show users roll
+- reduce ETH sent
+- disable button when not on localhost and wallet no connected
+- setLoading changes before transaction returns (on rinkeby)
