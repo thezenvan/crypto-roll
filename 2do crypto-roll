@@ -1,10 +1,13 @@
 2do
 ====
-- setLoading update if transaction fails (rinkeby)
-- show animation until transaction completes and roll number received
+- use indexed for Rolled event to filter only event for current user?
+- change vars to memory to speed things up?
+- setLoading update if transaction fails/succeeds (test on testnet)
 - upload to rinkeby for testing
 - send to reddit and discord for feedback
 
+- note about randomess not being perfect at the moment (in how it works)
+- show animation until transaction completes and roll number received
 - balance on top right not always updating when connecting metamask
 - address showing on top right w/o wallet connected
 . Change colors, logo, prize rainbow, spin number animation
@@ -14,6 +17,7 @@
 - remove unused code in app and contract
 - show contract balance in proper token
 - change staking amount to $1 equivalent
+- dropdown to change L1/L2 chain
 - animation of rolling after staking
 - send pot minus 1% to winner
 - send 1% of staking when someone wins pot
@@ -24,6 +28,7 @@
 - set keys before publishing
 - debug to false
 - verify contracts
+- VRF Orlace https://blog.chain.link/random-number-generation-solidity/#:~:text=Random%20number%20generation%20(RNG)%20in%20solidity%20must%20be%20done%20by,to%20the%20determinism%20of%20blockchains.
 - get random string from oracle (https://stackoverflow.com/questions/48848948/how-to-generate-a-random-number-in-solidity/67332959#67332959)
 - vars https://docs.soliditylang.org/en/v0.8.13/cheatsheet.html?highlight=global%20variables#global-variables
 

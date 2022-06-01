@@ -1,13 +1,13 @@
 import WalletConnectProvider from "@walletconnect/web3-provider";
 //import Torus from "@toruslabs/torus-embed"
 import WalletLink from "walletlink";
-import { Alert, Button, Col, Divider, Menu, Row, List, Modal, Typography } from "antd";
+import { Alert, Button, Col, Divider, Row, List, Modal, Typography } from "antd";
 import "antd/dist/antd.css";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { BrowserRouter, Link, Route, Switch } from "react-router-dom";
+import { BrowserRouter, Route, Switch } from "react-router-dom";
 import Web3Modal from "web3modal";
 import "./App.css";
-import { Account, Address, Balance, Contract, Faucet, GasGauge, Header, Ramp, ThemeSwitch } from "./components";
+import { Account, Address, Balance, Faucet, GasGauge, Header, Ramp, ThemeSwitch } from "./components";
 import { INFURA_ID, NETWORK, NETWORKS } from "./constants";
 import { Transactor } from "./helpers";
 import {
@@ -20,14 +20,10 @@ import {
 } from "eth-hooks";
 import { useEventListener } from "eth-hooks/events/useEventListener";
 import { useExchangeEthPrice } from "eth-hooks/dapps/dex";
-// import Hints from "./Hints";
-import { ExampleUI, Hints, Subgraph } from "./views";
-
 import { useContractConfig } from "./hooks";
 import Portis from "@portis/web3";
 import Fortmatic from "fortmatic";
 import Authereum from "authereum";
-import humanizeDuration from "humanize-duration";
 
 const { Text } = Typography;
 
@@ -279,16 +275,24 @@ function App(props) {
   //console.log("playerRoll:", playerRoll);
 
   // ** keep track of a variable from the contract in the local React state:
-  const playerRoll = useContractReader(readContracts, "Staker", "rolls", [address]);
+  const playerRoll = useContractReader(readContracts, "Staker", "rolls", [address], null, null, async update => {
+    console.log("randomChars update "+update==previousRoll)
+    if (update && previousRoll!=update) {
+      //console.log("randomChars update2 "+" - "+JSON.stringify(update))
+      //setLoading(false);
+      //console.log("playerRolled "+playerRoll);
+      //setPreviousRoll(update);
+    }
+  });
   //console.log("💸 playerRoll:", playerRoll);
 
   // when playerRolled changes, setLoading to false
   const playerRolled = useMemo(() => {
-    //console.log("BLAT "+rollEvents[rollEvents.length-1].args[1])
-    if (playerRoll!=0 && playerRoll!=null && rollEvents[rollEvents.length-1].args[1]!=previousRoll) {
-      //setLoading(false);
+    if (rollEvents && rollEvents.length>0) console.log("rollEvents update "+rollEvents[rollEvents.length-1].args[1])
+    if (playerRoll!=0 && playerRoll!=null && rollEvents.length>0 && rollEvents[rollEvents.length-1].args[1]!=previousRoll) {
+      setLoading(false);
       //console.log("playerRolled "+playerRoll);
-      setPreviousRoll(playerRoll);
+      setPreviousRoll(rollEvents[rollEvents.length-1].args[1]);
     }
   },[rollEvents])
 
@@ -338,8 +342,10 @@ function App(props) {
         size="40"
         onClick={() => {
           setLoading(true);
-          tx(writeContracts.Staker.stake({ value: ethers.utils.parseEther("0.0001") }), writeResult => {
-            setLoading(false);
+          tx(writeContracts.Staker.stake({ value: ethers.utils.parseEther("0.0001") }), async update => {
+            //setLoading(false);
+            console.log("tx update "+update.error);
+            // SERVER_ERROR -32000 insufficient funds
           });
         }}
       >
@@ -544,29 +550,6 @@ function App(props) {
       <Header />
       {networkDisplay}
       <BrowserRouter>
-        {/*<Menu style={{ textAlign: "center" }} selectedKeys={[route]} mode="horizontal">
-          <Menu.Item key="/">
-            <Link
-              onClick={() => {
-                setRoute("/");
-              }}
-              to="/"
-            >
-              Staker UI
-            </Link>
-          </Menu.Item>
-          <Menu.Item key="/contracts">
-            <Link
-              onClick={() => {
-                setRoute("/contracts");
-              }}
-              to="/contracts"
-            >
-              Debug Contracts
-            </Link>
-          </Menu.Item>
-        </Menu>*/}
-
         <Switch>
           <Route exact path="/">
             {playerWonDisplay}
@@ -623,17 +606,6 @@ function App(props) {
                 }}
               />
             </div>
-
-            {/* uncomment for a second contract:
-            <Contract
-              name="SecondContract"
-              signer={userProvider.getSigner()}
-              provider={localProvider}
-              address={address}
-              blockExplorer={blockExplorer}
-              contractConfig={contractConfig}
-            />
-            */}
           </Route>
         </Switch>
       </BrowserRouter>

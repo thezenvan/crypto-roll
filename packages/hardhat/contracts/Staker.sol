@@ -23,6 +23,7 @@ contract Staker {
     playerRoll = uint(blockhash(block.number-1)) % 10000;
     rolls[msg.sender] = playerRoll;
     emit Rolled(msg.sender, playerRoll);
+
     // ************** DEBUG ************
     //playerWonAddress = msg.sender;
     //playerRoll = randomChars;
